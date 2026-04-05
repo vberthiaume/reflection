@@ -35,9 +35,8 @@ This takes ~30-60 minutes. The compiler will be at `<clone-dir>/build/bin/clang+
 
 ```bash
 cd cpp
-cmake -B build -G Ninja \
-  -DCMAKE_CXX_COMPILER=<path-to-clang-p2996>/build/bin/clang++
-ninja -C build
+cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=<path-to-clang-p2996>/build/bin/clang++
+ninja -C build  # or just cmake --build build, which will use the previous configuration
 ./build/reflection_demo
 ```
 
