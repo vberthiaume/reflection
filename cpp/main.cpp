@@ -19,14 +19,6 @@
  *   2. Automatic struct-to-JSON serialization
  *   3. A generic "describe" function that prints any struct's fields
  *   4. Compile-time struct field iteration for generic equality comparison
- *
- * Build (Bloomberg clang-p2996):
- *   clang++ -std=c++26 -freflection -fexpansion-statements \
- *           -nostdinc++ -isystem <path>/include/c++/v1 \
- *           -L <path>/lib -lc++ -lc++abi \
- *           -isysroot $(xcrun --show-sdk-path) \
- *           -Wl,-rpath,<path>/lib \
- *           -o reflection_demo main.cpp
  */
 
 #include <meta>
