@@ -23,6 +23,7 @@
 #include <string>
 #include <sstream>
 #include <type_traits>
+#include <expected>
 
 struct Vector3
 {
@@ -44,29 +45,40 @@ struct Player
 // =========================================================================
 // Demo 1 — Enum ↔ string conversion
 // Before C++26: you'd write a switch with one case per enumerator, or use
-// a macro like X-macros. Adding a new enumerator meant updating the switch.
-// With reflection: a single generic function handles ANY enum automatically.
+// a macro like X-macros. With reflection: a single generic function handles ANY enum automatically.
 
-/// Convert any enum value to its name as a string.
+/**
+ * @brief Convert any enum value to its name as a string.
+ *
+ * 'requires std::is_enum_v<E>' is a C++20 constraint that restricts this
+ * template to only accept enum types. Without it, calling enum_to_string(42)
+ * would compile but fail inside the body when ^^E tries to reflect a non-enum.
+ * The constraint gives a clear error at the call site instead.
+ *
+ * 'constexpr' is NOT required by the reflection — ^^, [:], and template for
+ * are all consteval (compile-time only) regardless. constexpr here just allows
+ * the function itself to be evaluated at compile time if desired, e.g.:
+ *   static_assert(enum_to_string(Color::Red) == "Red");
+ * It would work fine as a regular (non-constexpr) function too.
+ *
+ * @tparam E An enum type (enforced by the requires clause).
+ * @param value The enum value to convert.
+ * @return The enumerator's source-code name (e.g., "Red"), or "<unknown>"
+ *         if no enumerator matches.
+ */
 template <typename E>
     requires std::is_enum_v<E>
 constexpr std::string enum_to_string(E value)
 {
     std::string result = "<unknown>";
 
-    // ^^E reflects the enum type. enumerators_of() returns a vector of
-    // std::meta::info values — one per enumerator.
-    // define_static_array() makes it usable in a template for loop.
-    // For each enumerator, we splice it back into an expression with [: :]
-    // and compare it to our runtime value.
     // ^^E reflects the enum type E, producing a std::meta::info value.
-    // enumerators_of() takes that reflection and returns a vector of
-    //   std::meta::info — one entry per enumerator (e.g., Red, Green, ...).
-    // define_static_array() converts the vector into a static array so it
-    //   can be iterated with 'template for'.
-    // 'template for' unrolls the loop at compile time — the compiler
-    //   generates one if-branch per enumerator with zero runtime overhead.
-    template for (constexpr auto e : define_static_array(enumerators_of(^^E)))
+    // enumerators_of() takes that reflection and returns a vector of std::meta::info — one entry per enumerator (e.g., Red, Green, ...).
+    //
+    // define_static_array() converts the vector into a static array so it can be iterated with 'template for'.
+    //
+    // 'template for' unrolls the loop at compile time — the compiler generates one if-branch per enumerator with zero runtime overhead.
+    template for (constexpr auto e : define_static_array (enumerators_of (^^E)))
     {
         // [:e:] is the splice operator — it turns the std::meta::info 'e'
         //   back into the actual enumerator value (e.g., Color::Red).
@@ -79,25 +91,28 @@ constexpr std::string enum_to_string(E value)
     return result;
 }
 
-/// Convert a string to an enum value (returns false if no match).
+/**
+ * @brief Convert a string to an enum value.
+ * @tparam E An enum type (enforced by the requires clause).
+ * @param str The string to look up (e.g., "Magenta").
+ * @return The matching enumerator, or an error string if not found.
+ *         The error message uses identifier_of(^^E) to include the enum's
+ *         type name via reflection.
+ */
 template <typename E>
     requires std::is_enum_v<E>
-constexpr bool string_to_enum(const std::string& str, E& out)
+constexpr std::expected<E, std::string> string_to_enum(const std::string& str)
 {
-    bool found = false;
-
     // Same pattern: reflect ^^E -> get enumerators -> iterate at compile time.
     template for (constexpr auto e : define_static_array(enumerators_of(^^E)))
     {
         // identifier_of(e) gives us the name; [:e:] gives us the value.
         if (str == identifier_of(e))
-        {
-            out = [:e:];
-            found = true;
-        }
+            return [:e:];
     }
 
-    return found;
+    // identifier_of(^^E) reflects the enum type itself to get its name (e.g., "Color").
+    return std::unexpected("\"" + str + "\" is not a valid " + std::string(identifier_of(^^E)));
 }
 
 // =========================================================================
@@ -111,7 +126,15 @@ constexpr bool string_to_enum(const std::string& str, E& out)
 template <typename T>
 std::string to_json(const T& obj);
 
-// Helper: serialize a single value depending on its type.
+/**
+ * @brief Serialize a single value to a JSON fragment, dispatching on type.
+ *
+ * Handles strings, enums, arithmetic types, and nested aggregates.
+ *
+ * @tparam T The type of the value (deduced).
+ * @param val The value to serialize.
+ * @return A JSON-formatted string fragment.
+ */
 template <typename T>
 std::string value_to_json(const T& val)
 {
@@ -127,7 +150,15 @@ std::string value_to_json(const T& val)
         return "\"<unsupported>\"";
 }
 
-/// Serialize any aggregate struct to a JSON string.
+/**
+ * @brief Serialize any aggregate struct to a JSON string.
+ *
+ * Uses reflection to iterate all fields — no manual field listing needed.
+ *
+ * @tparam T An aggregate (struct) type.
+ * @param obj The object to serialize.
+ * @return A JSON-formatted string (e.g., { "name": "Alice", "health": 95 }).
+ */
 template <typename T>
 std::string to_json(const T& obj)
 {
@@ -136,9 +167,6 @@ std::string to_json(const T& obj)
 
     bool first = true;
 
-    // nonstatic_data_members_of() gives us every field of the struct.
-    // identifier_of(member) is the field name, and obj.[:member:] accesses
-    // that field's value on our concrete object.
     // ^^T reflects the struct type T.
     // nonstatic_data_members_of() returns a vector of std::meta::info —
     //   one per field (e.g., name, health, position, color).
@@ -168,6 +196,15 @@ std::string to_json(const T& obj)
 // =========================================================================
 // Prints the type name, then each field's name, type, and value.
 
+/**
+ * @brief Print a human-readable description of any struct.
+ *
+ * Outputs the type name, then each field's name, type, and current value
+ * to std::cout.
+ *
+ * @tparam T Any struct type.
+ * @param obj The object to describe.
+ */
 template <typename T>
 void describe(const T& obj)
 {
@@ -209,6 +246,16 @@ void describe(const T& obj)
 // C++20's defaulted operator==. Reflection gives you a third option
 // that works on any struct without modifying it.
 
+/**
+ * @brief Compare two structs for equality by iterating all fields via reflection.
+ *
+ * Works on any aggregate without requiring operator== to be defined.
+ *
+ * @tparam T An aggregate type (enforced by the requires clause).
+ * @param a First object to compare.
+ * @param b Second object to compare.
+ * @return true if all fields are equal, false otherwise.
+ */
 template <typename T>
     requires std::is_aggregate_v<T>
 bool generic_equal(const T& a, const T& b)
@@ -245,9 +292,11 @@ int main()
     std::cout << "Color::Blue   -> \"" << enum_to_string(Color::Blue) << "\"\n";
     std::cout << "Color::Yellow -> \"" << enum_to_string(Color::Yellow) << "\"\n";
 
-    Color parsed;
-    if (string_to_enum(std::string("Magenta"), parsed))
-        std::cout << "\"Magenta\"     -> Color::" << enum_to_string(parsed) << "\n";
+    auto parsed = string_to_enum<Color>("Magenta");
+    if (parsed)
+        std::cout << "\"Magenta\"     -> Color::" << enum_to_string(*parsed) << "\n";
+    else
+        std::cout << parsed.error() << "\n";
 
     std::cout << "\n";
 
