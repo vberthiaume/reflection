@@ -1,15 +1,12 @@
-/*
- * C++26 Reflection Demo
- * =====================
- * C++ has historically had zero built-in reflection. If you wanted to
- * serialize a struct, print its fields, or convert an enum to a string,
- * you had to write tedious boilerplate or use macros/code generators.
- *
- * C++26 (P2996) changes everything by adding compile-time reflection:
- *   ^^T       — the "reflect" operator: produces a std::meta::info value
- *                describing T (a type, enumerator, namespace, etc.)
- *   [: r :]   — the "splice" operator: turns a std::meta::info back into
- *                a language construct (type, expression, etc.)
+/* C++26 (P2996) introduces compile-time reflection with the following operators:
+ *   ^^T                    — the "reflect" operator: produces a std::meta::info value
+ *                            describing T (a type, enumerator, namespace, etc.)
+ *   [: r :]                — the "splice" operator: turns a std::meta::info back into
+ *                            a language construct (type, expression, etc.)
+ *   template for           — compile-time expansion loop: iterates over a range of
+ *                            reflections, unrolled by the compiler into one block per element.
+ *   define_static_array()  — converts a vector of std::meta::info into a static
+ *                            array that template for can iterate over.
  *
  * All reflection happens at compile time (consteval). There is no runtime
  * overhead — the compiler resolves everything and emits ordinary code.
@@ -26,12 +23,6 @@
 #include <string>
 #include <sstream>
 #include <type_traits>
-
-using access_context = std::meta::access_context;
-
-// =========================================================================
-// Domain types — plain structs and enums, no boilerplate registration
-// =========================================================================
 
 struct Vector3
 {
@@ -52,7 +43,6 @@ struct Player
 
 // =========================================================================
 // Demo 1 — Enum ↔ string conversion
-// =========================================================================
 // Before C++26: you'd write a switch with one case per enumerator, or use
 // a macro like X-macros. Adding a new enumerator meant updating the switch.
 // With reflection: a single generic function handles ANY enum automatically.
@@ -69,9 +59,20 @@ constexpr std::string enum_to_string(E value)
     // define_static_array() makes it usable in a template for loop.
     // For each enumerator, we splice it back into an expression with [: :]
     // and compare it to our runtime value.
+    // ^^E reflects the enum type E, producing a std::meta::info value.
+    // enumerators_of() takes that reflection and returns a vector of
+    //   std::meta::info — one entry per enumerator (e.g., Red, Green, ...).
+    // define_static_array() converts the vector into a static array so it
+    //   can be iterated with 'template for'.
+    // 'template for' unrolls the loop at compile time — the compiler
+    //   generates one if-branch per enumerator with zero runtime overhead.
     template for (constexpr auto e : define_static_array(enumerators_of(^^E)))
     {
+        // [:e:] is the splice operator — it turns the std::meta::info 'e'
+        //   back into the actual enumerator value (e.g., Color::Red).
         if (value == [:e:])
+            // identifier_of() returns the source-code name of the
+            //   enumerator as a string_view (e.g., "Red").
             result = std::string(identifier_of(e));
     }
 
@@ -85,8 +86,10 @@ constexpr bool string_to_enum(const std::string& str, E& out)
 {
     bool found = false;
 
+    // Same pattern: reflect ^^E -> get enumerators -> iterate at compile time.
     template for (constexpr auto e : define_static_array(enumerators_of(^^E)))
     {
+        // identifier_of(e) gives us the name; [:e:] gives us the value.
         if (str == identifier_of(e))
         {
             out = [:e:];
@@ -136,13 +139,22 @@ std::string to_json(const T& obj)
     // nonstatic_data_members_of() gives us every field of the struct.
     // identifier_of(member) is the field name, and obj.[:member:] accesses
     // that field's value on our concrete object.
+    // ^^T reflects the struct type T.
+    // nonstatic_data_members_of() returns a vector of std::meta::info —
+    //   one per field (e.g., name, health, position, color).
+    // std::meta::access_context::unchecked() bypasses access checking (lets us
+    //   reflect private members too if needed).
     template for (constexpr auto member :
                   define_static_array(nonstatic_data_members_of(^^T,
-                      access_context::unchecked())))
+                      std::meta::access_context::unchecked())))
     {
         if (!first) os << ", ";
         first = false;
 
+        // identifier_of(member) returns the field's source-code name
+        //   as a string_view (e.g., "health").
+        // obj.[:member:] splices the reflection back into a member access
+        //   expression — equivalent to writing obj.health, obj.name, etc.
         os << "\"" << identifier_of(member) << "\": "
            << value_to_json(obj.[:member:]);
     }
@@ -159,13 +171,18 @@ std::string to_json(const T& obj)
 template <typename T>
 void describe(const T& obj)
 {
-    // display_string_of() gives us a human-readable type name.
+    // ^^T reflects the type T.
+    // display_string_of() returns a human-readable string for any
+    //   reflection (e.g., "Player", "int", "Vector3").
     std::cout << "Object of type '" << display_string_of(^^T) << "':\n";
 
     template for (constexpr auto member :
                   define_static_array(nonstatic_data_members_of(^^T,
-                      access_context::unchecked())))
+                      std::meta::access_context::unchecked())))
     {
+        // type_of(member) returns a reflection of the field's type,
+        //   e.g., reflecting 'int' for the 'health' field.
+        // display_string_of() then turns that into a printable name.
         std::cout << "  " << identifier_of(member)
                   << " (" << display_string_of(type_of(member)) << ")"
                   << " = ";
@@ -198,10 +215,14 @@ bool generic_equal(const T& a, const T& b)
 {
     bool equal = true;
 
+    // Same pattern: reflect the type, iterate its fields at compile time,
+    // and splice each field into a comparison expression.
     template for (constexpr auto member :
                   define_static_array(nonstatic_data_members_of(^^T,
-                      access_context::unchecked())))
+                      std::meta::access_context::unchecked())))
     {
+        // a.[:member:] and b.[:member:] splice the same field reflection
+        //   into member access on two different objects.
         if (a.[:member:] != b.[:member:])
             equal = false;
     }

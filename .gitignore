@@ -11,5 +11,8 @@ reflection_demo
 __pycache__/
 *.pyc
 
+# Clangd cache
+.cache/
+
 # macOS
 .DS_Store
