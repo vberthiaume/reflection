@@ -44,8 +44,8 @@ struct Player
 
 // =========================================================================
 // Demo 1 — Enum ↔ string conversion
-// Before C++26: you'd write a switch with one case per enumerator, or use
-// a macro like X-macros. With reflection: a single generic function handles ANY enum automatically.
+// Before C++26 you'd write a switch with one case per enumerator, or use
+// a macro like X-macros. With reflection a single generic function handles ANY enum automatically.
 
 /**
  * @brief Convert any enum value to its name as a string.
@@ -53,7 +53,6 @@ struct Player
  * 'requires std::is_enum_v<E>' is a C++20 constraint that restricts this
  * template to only accept enum types. Without it, calling enum_to_string(42)
  * would compile but fail inside the body when ^^E tries to reflect a non-enum.
- * The constraint gives a clear error at the call site instead.
  *
  * 'constexpr' is NOT required by the reflection — ^^, [:], and template for
  * are all consteval (compile-time only) regardless. constexpr here just allows
@@ -72,20 +71,17 @@ constexpr std::string enum_to_string(E value)
 {
     std::string result = "<unknown>";
 
+    // NOTE: this whole pattern is what builds with the current p2996 compiler, but may not reflect the actual p2996 reflection operators
     // ^^E reflects the enum type E, producing a std::meta::info value.
     // enumerators_of() takes that reflection and returns a vector of std::meta::info — one entry per enumerator (e.g., Red, Green, ...).
-    //
     // define_static_array() converts the vector into a static array so it can be iterated with 'template for'.
-    //
     // 'template for' unrolls the loop at compile time — the compiler generates one if-branch per enumerator with zero runtime overhead.
     template for (constexpr auto e : define_static_array (enumerators_of (^^E)))
     {
-        // [:e:] is the splice operator — it turns the std::meta::info 'e'
-        //   back into the actual enumerator value (e.g., Color::Red).
+        // [:e:] is the splice operator — it turns the std::meta::info 'e' back into the actual enumerator value (e.g., Color::Red).
         if (value == [:e:])
-            // identifier_of() returns the source-code name of the
-            //   enumerator as a string_view (e.g., "Red").
-            result = std::string(identifier_of(e));
+            // identifier_of() returns the source-code name of the enumerator as a string_view (e.g., "Red").
+            result = std::string (identifier_of (e));
     }
 
     return result;
@@ -95,24 +91,23 @@ constexpr std::string enum_to_string(E value)
  * @brief Convert a string to an enum value.
  * @tparam E An enum type (enforced by the requires clause).
  * @param str The string to look up (e.g., "Magenta").
- * @return The matching enumerator, or an error string if not found.
- *         The error message uses identifier_of(^^E) to include the enum's
- *         type name via reflection.
+ * @return The matching enumerator, or an error string if not found. The error message uses identifier_of(^^E)
+ *         to include the enum's type name via reflection.
  */
 template <typename E>
     requires std::is_enum_v<E>
 constexpr std::expected<E, std::string> string_to_enum(const std::string& str)
 {
     // Same pattern: reflect ^^E -> get enumerators -> iterate at compile time.
-    template for (constexpr auto e : define_static_array(enumerators_of(^^E)))
+    template for (constexpr auto e : define_static_array (enumerators_of (^^E)))
     {
         // identifier_of(e) gives us the name; [:e:] gives us the value.
-        if (str == identifier_of(e))
+        if (str == identifier_of (e))
             return [:e:];
     }
 
     // identifier_of(^^E) reflects the enum type itself to get its name (e.g., "Color").
-    return std::unexpected("\"" + str + "\" is not a valid " + std::string(identifier_of(^^E)));
+    return std::unexpected("\"" + str + "\" is not a valid " + std::string (identifier_of (^^E)));
 }
 
 // =========================================================================
