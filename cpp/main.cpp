@@ -69,11 +69,13 @@ constexpr std::string enum_to_string(E value)
 {
     std::string result = "<unknown>";
 
-    // NOTE: this whole pattern is what builds with the current p2996 compiler, but may not reflect the actual p2996 reflection operators
-    // ^^E reflects the enum type E, producing a std::meta::info value.
-    // enumerators_of() takes that reflection and returns a vector of std::meta::info — one entry per enumerator (e.g., Red, Green, ...).
-    // define_static_array() converts the vector into a static array so it can be iterated with 'template for'.
-    // 'template for' unrolls the loop at compile time — the compiler generates one if-branch per enumerator with zero runtime overhead.
+    /*  - ^^E reflects the enum type E, producing a std::meta::info value.
+        - enumerators_of() takes that reflection and returns a vector of std::meta::info, one entry per enumerator
+            (e.g., Red, Green, ...).
+        - define_static_array() converts the vector into a static array so it can be iterated with 'template for'. This
+            is not required in p2996, but it currently is with this compiler
+        - 'template for' unrolls the loop at compile time; the compiler generates one if-branch per enumerator.
+    */
     template for (constexpr auto e : define_static_array (enumerators_of (^^E)))
     {
         // [:e:] is the splice operator — it turns the std::meta::info 'e' back into the actual enumerator value (e.g., Color::Red).
