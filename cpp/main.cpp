@@ -1,4 +1,5 @@
-/* C++26 (P2996) introduces compile-time reflection with the following operators:
+/* C++26 (P2996, https://isocpp.org/files/papers/P2996R13.html) introduces compile-time reflection
+ * with the following operators:
  *   ^^T                    — the "reflect" operator: produces a std::meta::info value
  *                            describing T (a type, enumerator, namespace, etc.)
  *   [: r :]                — the "splice" operator: turns a std::meta::info back into
@@ -42,10 +43,7 @@ struct Player
     Color       color    = Color::Red;
 };
 
-// =========================================================================
-// Demo 1 — Enum ↔ string conversion
-// Before C++26 you'd write a switch with one case per enumerator, or use
-// a macro like X-macros. With reflection a single generic function handles ANY enum automatically.
+// ============================ Demo 1 — Enum ↔ string conversion ================================
 
 /**
  * @brief Convert any enum value to its name as a string.
@@ -54,7 +52,7 @@ struct Player
  * template to only accept enum types. Without it, calling enum_to_string(42)
  * would compile but fail inside the body when ^^E tries to reflect a non-enum.
  *
- * 'constexpr' is NOT required by the reflection — ^^, [:], and template for
+ * 'constexpr' is NOT required by the reflection — ^^, [:], and "template for"
  * are all consteval (compile-time only) regardless. constexpr here just allows
  * the function itself to be evaluated at compile time if desired, e.g.:
  *   static_assert(enum_to_string(Color::Red) == "Red");
