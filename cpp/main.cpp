@@ -121,12 +121,10 @@ constexpr std::expected<E, std::string> string_to_enum (const std::string& str)
 
 // =========================================================================
 // Demo 2 — Automatic JSON serialization
-// =========================================================================
-// Before C++26: you'd hand-write a to_json() method for every struct,
-// listing each field manually. Adding a field meant updating the method.
+// Before C++26: you'd hand-write a to_json() method for every struct, listing each field manually. Adding a field meant updating the method.
 // With reflection: one generic function serializes ANY aggregate.
 
-// Forward-declare so nested structs work recursively.
+// Forward-declaring to_json() so we can use it right below when recursing
 template <typename T>
 std::string to_json (const T& obj);
 
