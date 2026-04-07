@@ -69,17 +69,17 @@ constexpr std::string enum_to_string(E value)
 {
     std::string result = "<unknown>";
 
-    /*  - ^^E reflects the enum type E, producing a std::meta::info value.
-        - enumerators_of() takes that reflection and returns a vector of std::meta::info, one entry per enumerator
-            (e.g., Red, Green, ...).
-        - define_static_array() converts the vector into a static array so it can be iterated with 'template for'. This
-            is not required in p2996, but it currently is with this compiler
+    /*  This basically iterates through all the declared enum values of E.
+        - ^^E reflects the enum type E, producing a std::meta::info value.
+        - from that, enumerators_of() returns a vector of std::meta::info, one per enumerator (Red, Green, ...)
+        - define_static_array() converts the vector into a static array so it can be iterated with 'template for'.
+            Not required by the P2996 standard, but needed by the Bloomberg clang-p2996 fork.
         - 'template for' unrolls the loop at compile time; the compiler generates one if-branch per enumerator.
     */
     template for (constexpr auto e : define_static_array (enumerators_of (^^E)))
     {
-        // [:e:] is the splice operator — it turns the std::meta::info 'e' back into the actual enumerator value (e.g., Color::Red).
-        if (value == [:e:])
+        // at this point, e is a std::meta::info, so [:e:] converts it into an actual enumerator value, e.g., Color::Red
+        if ([:e:] == value)
             // identifier_of() returns the source-code name of the enumerator as a string_view (e.g., "Red").
             result = std::string (identifier_of (e));
     }
@@ -98,16 +98,17 @@ template <typename E>
     requires std::is_enum_v<E>
 constexpr std::expected<E, std::string> string_to_enum(const std::string& str)
 {
-    // Same pattern: reflect ^^E -> get enumerators -> iterate at compile time.
+    // this is the exact same as above; compile-time-iterate through the possible enumerator values of E
     template for (constexpr auto e : define_static_array (enumerators_of (^^E)))
     {
-        // identifier_of(e) gives us the name; [:e:] gives us the value.
-        if (str == identifier_of (e))
+        // but here we reverse the logic: identifier_of(e) gives us the enumerator's name as a string (e.g., "Magenta")
+        if (identifier_of (e) == str)
+            // and [:e:] splices it back into the actual enumerator value (e.g., Color::Magenta).
             return [:e:];
     }
 
-    // identifier_of(^^E) reflects the enum type itself to get its name (e.g., "Color").
-    return std::unexpected("\"" + str + "\" is not a valid " + std::string (identifier_of (^^E)));
+    // Can't find the enumerator value. identifier_of(^^E) reflects the enum type to its source-code name (e.g., "Color").
+    return std::unexpected ("\"" + str + "\" is not a valid enumerator value of " + std::string (identifier_of (^^E)));
 }
 
 // =========================================================================
