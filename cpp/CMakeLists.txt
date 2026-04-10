@@ -7,7 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Disable CMake's automatic rpath handling — we set it manually below.
 set(CMAKE_SKIP_RPATH TRUE)
 
-add_executable(reflection_demo main.cpp)
+add_executable(reflection_demo main.cpp
+        types.h
+        1_enum_string.h
+        2_json_serialize.h
+        3_describe.h
+        4_generic_equal.h)
 
 # Use the p2996 fork's libc++ (which includes <meta>) instead of the system one.
 # CMAKE_CXX_COMPILER should point to the p2996 clang++ binary; its libc++ lives
