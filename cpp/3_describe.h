@@ -7,9 +7,7 @@
 #include <iostream>
 #include <type_traits>
 
-// =========================================================================
-// Demo 3 — Generic "describe" (type + field introspection)
-// =========================================================================
+// ============================ Demo 3 — Generic "describe" type & field introspection ============================
 // Prints the type name, then each field's name, type, and value.
 
 /**

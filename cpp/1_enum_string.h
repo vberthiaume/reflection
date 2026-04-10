@@ -20,7 +20,7 @@
 #include <expected>
 #include <type_traits>
 
-// ============================ Demo 1 — Enum ↔ string conversion ================================
+// ============================ Demo 1 — Enum ↔ string conversion ============================
 
 /**
  * @brief Convert any enum value to its name as a string.

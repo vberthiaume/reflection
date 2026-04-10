@@ -7,9 +7,8 @@
 #include <sstream>
 #include <type_traits>
 
-// =========================================================================
-// Demo 2 — Automatic JSON serialization
-// Before C++26: you'd hand-write a to_json() method for every struct, listing each field manually. Adding a field meant updating the method.
+// ============================ Demo 2 — Automatic JSON serialization ============================
+// Before C++26: you'd hand-write a to_json() method for every struct, listing each field manually.
 // With reflection: one generic function serializes ANY aggregate.
 
 // Forward-declaring to_json() so we can use it right below when recursing
@@ -18,7 +17,6 @@ std::string to_json (const T& obj);
 
 /**
  * @brief Serialize a single value to a JSON fragment, dispatching on type.
- *
  * Handles strings, enums, arithmetic types, and nested aggregates.
  *
  * @tparam T The type of the value (deduced).
@@ -42,7 +40,6 @@ std::string value_to_json (const T& val)
 
 /**
  * @brief Serialize any aggregate struct to a JSON string.
- *
  * Uses reflection to iterate all fields — no manual field listing needed.
  *
  * @tparam T An aggregate (struct) type.
@@ -58,10 +55,8 @@ std::string to_json (const T& obj)
     bool first = true;
 
     // ^^T reflects the struct type T.
-    // nonstatic_data_members_of() returns a vector of std::meta::info —
-    //   one per field (e.g., name, health, position, color).
-    // std::meta::access_context::unchecked() bypasses access checking (lets us
-    //   reflect private members too if needed).
+    // nonstatic_data_members_of() returns a vector of std::meta::info — one per field (e.g., name, health, position, color).
+    // std::meta::access_context::unchecked() bypasses access checking (lets us reflect private members too if needed).
     template for (constexpr auto member :
                   define_static_array (nonstatic_data_members_of (^^T,
                                                                   std::meta::access_context::unchecked())))

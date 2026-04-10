@@ -3,9 +3,7 @@
 #include <meta>
 #include <type_traits>
 
-// =========================================================================
-// Demo 4 — Generic equality comparison
-// =========================================================================
+// ============================ Demo 4 — Generic equality comparison ============================
 // Before C++26: you'd write operator== comparing each field, or use
 // C++20's defaulted operator==. Reflection gives you a third option
 // that works on any struct without modifying it.
