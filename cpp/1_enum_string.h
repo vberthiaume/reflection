@@ -40,9 +40,9 @@
  * @return The enumerator's source-code name (e.g., "Red"), or "<unknown>"
  *         if no enumerator matches.
  */
-template <typename E>
-    requires std::is_enum_v<E>
-constexpr std::string enum_to_string (E value)
+template <typename T>
+    requires std::is_enum_v<T>
+constexpr std::string enum_to_string (T value)
 {
     std::string result = "<unknown>";
 
@@ -53,7 +53,7 @@ constexpr std::string enum_to_string (E value)
             Not required by the P2996 standard, but needed by the Bloomberg clang-p2996 fork.
         - 'template for' unrolls the loop at compile time; the compiler generates one if-branch per enumerator.
     */
-    template for (constexpr auto e : define_static_array (enumerators_of (^^E)))
+    template for (constexpr auto e : define_static_array (enumerators_of (^^T)))
     {
         // at this point, e is a std::meta::info, so [:e:] converts it into an actual enumerator value, e.g., Color::Red
         if ([:e:] == value)
@@ -71,12 +71,12 @@ constexpr std::string enum_to_string (E value)
  * @return The matching enumerator, or an error string if not found. The error message uses identifier_of(^^E)
  *         to include the enum's type name via reflection.
  */
-template <typename E>
-    requires std::is_enum_v<E>
-constexpr std::expected<E, std::string> string_to_enum (const std::string& str)
+template <typename T>
+    requires std::is_enum_v<T>
+constexpr std::expected<T, std::string> string_to_enum (const std::string& str)
 {
     // this is the exact same as above; compile-time-iterate through the possible enumerator values of E
-    template for (constexpr auto e : define_static_array (enumerators_of (^^E)))
+    template for (constexpr auto e : define_static_array (enumerators_of (^^T)))
     {
         // but here we reverse the logic: identifier_of(e) gives us the enumerator's name as a string (e.g., "Magenta")
         if (identifier_of (e) == str)
@@ -85,5 +85,5 @@ constexpr std::expected<E, std::string> string_to_enum (const std::string& str)
     }
 
     // Can't find the enumerator value. identifier_of(^^E) reflects the enum type to its source-code name (e.g., "Color").
-    return std::unexpected ("\"" + str + "\" is not a valid enumerator value of " + std::string (identifier_of (^^E)));
+    return std::unexpected ("\"" + str + "\" is not a valid enumerator value of " + std::string (identifier_of (^^T)));
 }
