@@ -1,3 +1,18 @@
+/* C++26 (P2996, https://isocpp.org/files/papers/P2996R13.html) introduces compile-time reflection
+* with the following operators:
+ *   ^^T                    — the "reflect" operator: produces a std::meta::info value
+ *                            describing T (a type, enumerator, namespace, etc.)
+ *   [: r :]                — the "splice" operator: turns a std::meta::info back into
+ *                            a language construct (type, expression, etc.)
+ *   template for           — compile-time expansion loop: iterates over a range of
+ *                            reflections, unrolled by the compiler into one block per element.
+ *   define_static_array()  — converts a vector of std::meta::info into a static
+ *                            array that template for can iterate over.
+ *
+ * All reflection happens at compile time (consteval). Some of the functions, e.g., enum_to_string()
+ * are constexpr but this isn't a reflection requirement.
+ */
+
 #include "types.h"
 #include "1_enum_string.h"
 #include "2_json_serialize.h"

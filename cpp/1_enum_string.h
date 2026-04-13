@@ -1,20 +1,5 @@
 #pragma once
 
-/* C++26 (P2996, https://isocpp.org/files/papers/P2996R13.html) introduces compile-time reflection
- * with the following operators:
- *   ^^T                    — the "reflect" operator: produces a std::meta::info value
- *                            describing T (a type, enumerator, namespace, etc.)
- *   [: r :]                — the "splice" operator: turns a std::meta::info back into
- *                            a language construct (type, expression, etc.)
- *   template for           — compile-time expansion loop: iterates over a range of
- *                            reflections, unrolled by the compiler into one block per element.
- *   define_static_array()  — converts a vector of std::meta::info into a static
- *                            array that template for can iterate over.
- *
- * All reflection happens at compile time (consteval). There is no runtime
- * overhead — the compiler resolves everything and emits ordinary code.
- */
-
 #include <meta>
 #include <string>
 #include <expected>
@@ -29,11 +14,6 @@
  * template to only accept enum types. Without it, calling enum_to_string(42)
  * would compile but fail inside the body when ^^E tries to reflect a non-enum.
  *
- * 'constexpr' is NOT required by the reflection — ^^, [:], and "template for"
- * are all consteval (compile-time only) regardless. constexpr here just allows
- * the function itself to be evaluated at compile time if desired, e.g.:
- *   static_assert(enum_to_string(Color::Red) == "Red");
- * It would work fine as a regular (non-constexpr) function too.
  *
  * @tparam E An enum type (enforced by the requires clause).
  * @param value The enum value to convert.
