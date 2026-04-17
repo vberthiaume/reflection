@@ -12,12 +12,12 @@ namespace mirror {
 /**
  * @brief Convert any enum value to its name as a string.
  *
- * 'requires std::is_enum_v<E>' is a C++20 constraint that restricts this
+ * 'requires std::is_enum_v<T>' is a C++20 constraint that restricts this
  * template to only accept enum types. Without it, calling enum_to_string(42)
- * would compile but fail inside the body when ^^E tries to reflect a non-enum.
+ * would compile but fail inside the body when ^^T tries to reflect a non-enum.
  *
  *
- * @tparam E An enum type (enforced by the requires clause).
+ * @tparam T An enum type (enforced by the requires clause).
  * @param value The enum value to convert.
  * @return The enumerator's source-code name (e.g., "Red"), or "<unknown>"
  *         if no enumerator matches.
@@ -28,8 +28,8 @@ constexpr std::string enum_to_string (T value)
 {
     std::string result = "<unknown>";
 
-    /*  This basically iterates through all the declared enum values of E.
-        - ^^E reflects the enum type E, producing a std::meta::info value.
+    /*  This basically iterates through all the declared enum values of T.
+        - ^^T reflects the type into a std::meta::info value.
         - from that, std::meta::enumerators_of() returns a vector of std::meta::info, one per enumerator (Red, Green, ...)
         - define_static_array() converts the vector into a static array so it can be iterated with 'template for'.
             Not required by the P2996 standard, but needed by the Bloomberg clang-p2996 fork.
@@ -48,16 +48,16 @@ constexpr std::string enum_to_string (T value)
 
 /**
  * @brief Convert a string to an enum value.
- * @tparam E An enum type (enforced by the requires clause).
+ * @tparam T An enum type (enforced by the requires clause).
  * @param str The string to look up (e.g., "Magenta").
- * @return The matching enumerator, or an error string if not found. The error message uses std::meta::identifier_of(^^E)
+ * @return The matching enumerator, or an error string if not found. The error message uses std::meta::identifier_of(^^T)
  *         to include the enum's type name via reflection.
  */
 template <typename T>
     requires std::is_enum_v<T>
 constexpr std::expected<T, std::string> string_to_enum (const std::string& str)
 {
-    // this is the exact same as above; compile-time-iterate through the possible enumerator values of E
+    // this is the exact same as above; compile-time-iterate through the possible enumerator values of T
     template for (constexpr auto e : define_static_array (std::meta::enumerators_of (^^T)))
     {
         // but here we reverse the logic: std::meta::identifier_of(e) gives us the enumerator's name as a string (e.g., "Magenta")
@@ -66,7 +66,7 @@ constexpr std::expected<T, std::string> string_to_enum (const std::string& str)
             return [:e:];
     }
 
-    // Can't find the enumerator value. std::meta::identifier_of(^^E) reflects the enum type to its source-code name (e.g., "Color").
+    // Can't find the enumerator value. std::meta::identifier_of(^^T) reflects the enum type to its source-code name (e.g., "Color").
     return std::unexpected ("\"" + str + "\" is not a valid enumerator value of " + std::string (std::meta::identifier_of (^^T)));
 }
 

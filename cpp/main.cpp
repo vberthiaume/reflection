@@ -1,7 +1,7 @@
 /* C++26 (P2996, https://isocpp.org/files/papers/P2996R13.html) introduces compile-time reflection
 * with the following operators:
  *   ^^T                    — the "reflect" operator: produces a std::meta::info value
- *                            describing T (a type, enumerator, namespace, etc.)
+ *                            describing T (which can be type, namespace, function, value, or templates)
  *   [: r :]                — the "splice" operator: turns a std::meta::info back into
  *                            a language construct (type, expression, etc.)
  *   template for           — compile-time expansion loop: iterates over a range of
@@ -51,7 +51,7 @@ int main()
     std::cout << "b = " << mirror::to_json (b) << "\n";
     std::cout << "c = " << mirror::to_json (c) << "\n";
     std::cout << "mirror::generic_equal(a, b) = " << std::boolalpha << mirror::generic_equal (a, b) << "\n";
-    std::cout << "mirror::generic_equal(a, c) = " << std::boolalpha << mirror::generic_equal (a, c) << "\n";
+    std::cout << "mirror::generic_equal(a, c) = " << std::boolalpha << mirror::generic_equal (a, c) << "\n\n";
 
     return 0;
 }

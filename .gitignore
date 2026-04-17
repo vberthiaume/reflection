@@ -1,6 +1,6 @@
 # Build output
 cpp/build/
-reflection_demo
+mirror
 
 # IDE files
 .vscode/

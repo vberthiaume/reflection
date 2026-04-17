@@ -1,4 +1,4 @@
-# C++26 Reflection Demo
+# Mirror: A C++26 Reflection Demo
 
 Two projects demonstrating reflection — one in C++26 (using P2996) and one in Python — to illustrate the same concepts side by side.
 

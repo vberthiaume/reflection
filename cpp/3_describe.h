@@ -12,10 +12,8 @@
 namespace mirror {
 
 /**
- * @brief Print a human-readable description of any struct.
- *
- * Outputs the type name, then each field's name, type, and current value
- * to std::cout.
+ * @brief Print a human-readable description of any struct. Outputs the type name,
+ * then each field's name, type, and current value to std::cout.
  *
  * @tparam T Any struct type.
  * @param obj The object to describe.
@@ -24,7 +22,7 @@ template <typename T>
 void describe (const T& obj)
 {
     // ^^T reflects the type T.
-    // std::meta::display_string_of() returns a human-readable string for any reflection (e.g., "Player", "int", "Vector3").
+    // std::meta::display_string_of() returns a human-readable string for any reflection
     std::cout << "Object of type '" << std::meta::display_string_of (^^T) << "':\n";
 
     template for (constexpr auto member :

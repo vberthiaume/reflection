@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(reflection_demo CXX)
+project(mirror CXX)
 
 set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Disable CMake's automatic rpath handling — we set it manually below.
 set(CMAKE_SKIP_RPATH TRUE)
 
-add_executable(reflection_demo main.cpp
+add_executable(mirror main.cpp
         types.h
         1_enum_string.h
         2_json_serialize.h
@@ -20,11 +20,11 @@ add_executable(reflection_demo main.cpp
 get_filename_component(CLANG_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
 get_filename_component(CLANG_ROOT "${CLANG_BIN_DIR}" DIRECTORY)
 
-target_compile_options(reflection_demo PRIVATE
+target_compile_options(mirror PRIVATE
     -freflection -fexpansion-statements
     -nostdinc++ -isystem "${CLANG_ROOT}/include/c++/v1")
 
-target_link_options(reflection_demo PRIVATE
+target_link_options(mirror PRIVATE
     -L "${CLANG_ROOT}/lib"
     -lc++ -lc++abi
     "-Wl,-rpath,${CLANG_ROOT}/lib")
