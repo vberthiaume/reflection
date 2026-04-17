@@ -50,25 +50,24 @@ std::string to_json (const T& obj)
 {
     std::ostringstream os("{ ", std::ios_base::ate);
 
-    bool first = true;
+    std::string_view sep;
 
-    // ^^T reflects the struct type T.
-    // nonstatic_data_members_of() returns a vector of std::meta::info — one per field (e.g., name, health, position, color).
-    // std::meta::access_context::unchecked() bypasses access checking (lets us reflect private members too if needed).
+    // Iterate over the members of T.
+    // - ^^T reflects the struct type T.
+    // - nonstatic_data_members_of() returns a vector of std::meta::info — one per T member
+    // - std::meta::access_context::unchecked() bypasses access checking (lets us reflect private members too if needed).
     template for (constexpr auto member :
                   define_static_array (nonstatic_data_members_of (^^T,
                                                                   std::meta::access_context::unchecked())))
     {
-        if (! first)
-            os << ", ";
-        first = false;
+        // identifier_of(member) returns the field's source-code name as a string_view (e.g., "health").
+        os << sep << "\"" << identifier_of (member) << "\": ";
 
-        // identifier_of(member) returns the field's source-code name
-        //   as a string_view (e.g., "health").
-        // obj.[:member:] splices the reflection back into a member access
-        //   expression — equivalent to writing obj.health, obj.name, etc.
-        os << "\"" << identifier_of (member) << "\": "
-           << value_to_json (obj.[:member:]);
+        // obj.[:member:] splices the reflection back into a member access expression — equivalent to writing obj.health, obj.name, etc.
+        os << value_to_json (obj.[:member:]);
+
+        //set our string separator to be non null after printing the first member
+        sep = ", ";
     }
 
     os << " }";
