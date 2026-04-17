@@ -8,8 +8,6 @@
 #include <type_traits>
 
 // ============================ Demo 2 — Automatic JSON serialization ============================
-// Before C++26: you'd hand-write a to_json() method for every struct, listing each field manually.
-// With reflection: one generic function serializes ANY aggregate.
 
 // Forward-declaring to_json() so we can use it right below when recursing
 template <typename T>
@@ -17,7 +15,8 @@ std::string to_json (const T& obj);
 
 /**
  * @brief Serialize a single value to a JSON fragment, dispatching on type.
- * Handles strings, enums, arithmetic types, and nested aggregates.
+ * Handles strings, enums (thanks to enum_to_string from the first reflection example),
+ * arithmetic types, and nested aggregates.
  *
  * @tparam T The type of the value (deduced).
  * @param val The value to serialize.
@@ -49,8 +48,7 @@ std::string value_to_json (const T& val)
 template <typename T>
 std::string to_json (const T& obj)
 {
-    std::ostringstream os;
-    os << "{ ";
+    std::ostringstream os("{ ", std::ios_base::ate);
 
     bool first = true;
 
