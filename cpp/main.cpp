@@ -26,20 +26,20 @@ int main()
     Player player { "Alice", 95, { 10.0f, 20.0f, 30.0f }, Color::Blue };
 
     std::cout << "============ DEMO 1 — Enum <-> string conversion (no switch statement!) ============\n";
-    std::cout << "Color::Blue   -> \"" << enum_to_string (Color::Blue) << "\"\n";
-    std::cout << "Color::Yellow -> \"" << enum_to_string (Color::Yellow) << "\"\n";
-    if (const auto parsed { string_to_enum<Color> ("Magenta")})
-        std::cout << "\"Magenta\"     -> Color::" << enum_to_string (*parsed) << "\n";
+    std::cout << "Color::Blue   -> \"" << mirror::enum_to_string (Color::Blue) << "\"\n";
+    std::cout << "Color::Yellow -> \"" << mirror::enum_to_string (Color::Yellow) << "\"\n";
+    if (const auto parsed { mirror::string_to_enum<Color> ("Magenta")})
+        std::cout << "\"Magenta\"     -> Color::" << mirror::enum_to_string (*parsed) << "\n";
     else
         std::cout << parsed.error() << "\n";
 
 
     std::cout << "\n\n============ DEMO 2 — Automatic JSON serialization ============\n";
-    std::cout << to_json (player) << "\n";
+    std::cout << mirror::to_json (player) << "\n";
 
 
     std::cout << "\n\n============ DEMO 3 — Generic struct inspection (describe) ============\n";
-    describe (player);
+    mirror::describe (player);
 
 
     std::cout << "\n\n============ DEMO 4 — Generic field-by-field equality ============\n";
@@ -47,11 +47,11 @@ int main()
     Vector3 b { 1.0f, 2.0f, 3.0f };
     Vector3 c { 1.0f, 2.0f, 9.0f };
 
-    std::cout << "a = " << to_json (a) << "\n";
-    std::cout << "b = " << to_json (b) << "\n";
-    std::cout << "c = " << to_json (c) << "\n";
-    std::cout << "generic_equal(a, b) = " << std::boolalpha << generic_equal (a, b) << "\n";
-    std::cout << "generic_equal(a, c) = " << std::boolalpha << generic_equal (a, c) << "\n";
+    std::cout << "a = " << mirror::to_json (a) << "\n";
+    std::cout << "b = " << mirror::to_json (b) << "\n";
+    std::cout << "c = " << mirror::to_json (c) << "\n";
+    std::cout << "mirror::generic_equal(a, b) = " << std::boolalpha << mirror::generic_equal (a, b) << "\n";
+    std::cout << "mirror::generic_equal(a, c) = " << std::boolalpha << mirror::generic_equal (a, c) << "\n";
 
     return 0;
 }

@@ -4,9 +4,8 @@
 #include <type_traits>
 
 // ============================ Demo 4 — Generic equality comparison ============================
-// Before C++26: you'd write operator== comparing each field, or use
-// C++20's defaulted operator==. Reflection gives you a third option
-// that works on any struct without modifying it.
+
+namespace mirror {
 
 /**
  * @brief Compare two structs for equality by iterating all fields via reflection.
@@ -27,7 +26,7 @@ bool generic_equal (const T& a, const T& b)
     // Same pattern: reflect the type, iterate its fields at compile time,
     // and splice each field into a comparison expression.
     template for (constexpr auto member :
-                  define_static_array (nonstatic_data_members_of (^^T,
+                  define_static_array (std::meta::nonstatic_data_members_of (^^T,
                                                                   std::meta::access_context::unchecked())))
     {
         // a.[:member:] and b.[:member:] splice the same field reflection
@@ -38,3 +37,5 @@ bool generic_equal (const T& a, const T& b)
 
     return equal;
 }
+
+} // namespace mirror

@@ -8,7 +8,8 @@
 #include <type_traits>
 
 // ============================ Demo 3 — Generic "describe" type & field introspection ============================
-// Prints the type name, then each field's name, type, and value.
+
+namespace mirror {
 
 /**
  * @brief Print a human-readable description of any struct.
@@ -23,19 +24,17 @@ template <typename T>
 void describe (const T& obj)
 {
     // ^^T reflects the type T.
-    // display_string_of() returns a human-readable string for any
-    //   reflection (e.g., "Player", "int", "Vector3").
-    std::cout << "Object of type '" << display_string_of (^^T) << "':\n";
+    // std::meta::display_string_of() returns a human-readable string for any reflection (e.g., "Player", "int", "Vector3").
+    std::cout << "Object of type '" << std::meta::display_string_of (^^T) << "':\n";
 
     template for (constexpr auto member :
-                  define_static_array (nonstatic_data_members_of (^^T,
+                  define_static_array (std::meta::nonstatic_data_members_of (^^T,
                                                                   std::meta::access_context::unchecked())))
     {
-        // type_of(member) returns a reflection of the field's type,
-        //   e.g., reflecting 'int' for the 'health' field.
-        // display_string_of() then turns that into a printable name.
-        std::cout << "  " << identifier_of (member)
-                  << " (" << display_string_of (type_of (member)) << ")"
+        // std::meta::type_of(member) returns a reflection of the field's type, e.g., reflecting 'int' for the 'health' field.
+        // std::meta::display_string_of() then turns that into a printable name.
+        std::cout << "  " << std::meta::identifier_of (member)
+                  << " (" << std::meta::display_string_of (std::meta::type_of (member)) << ")"
                   << " = ";
 
         // Print the value — dispatch on type for formatting.
@@ -43,12 +42,14 @@ void describe (const T& obj)
         using FieldType = std::remove_cvref_t<decltype (val)>;
 
         if constexpr (std::is_enum_v<FieldType>)
-            std::cout << enum_to_string (val);
+            std::cout << mirror::enum_to_string (val);
         else if constexpr (std::is_aggregate_v<FieldType>)
-            std::cout << to_json (val); // show nested structs as JSON
+            std::cout << mirror::to_json (val); // show nested structs as JSON
         else
             std::cout << val;
 
         std::cout << "\n";
     }
 }
+
+} // namespace mirror

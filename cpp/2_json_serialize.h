@@ -9,6 +9,8 @@
 
 // ============================ Demo 2 — Automatic JSON serialization ============================
 
+namespace mirror {
+
 // Forward-declaring to_json() so we can use it right below when recursing
 template <typename T>
 std::string to_json (const T& obj);
@@ -28,11 +30,11 @@ std::string value_to_json (const T& val)
     if constexpr (std::is_same_v<T, std::string>)
         return "\"" + val + "\"";
     else if constexpr (std::is_enum_v<T>)
-        return "\"" + enum_to_string (val) + "\"";
+        return "\"" + mirror::enum_to_string (val) + "\"";
     else if constexpr (std::is_arithmetic_v<T>)
         return std::to_string (val);
     else if constexpr (std::is_aggregate_v<T>)
-        return to_json (val); // recurse into nested structs
+        return mirror::to_json (val); // recurse into nested structs
     else
         return "\"<unsupported>\"";
 }
@@ -54,17 +56,17 @@ std::string to_json (const T& obj)
 
     // Iterate over the members of T.
     // - ^^T reflects the struct type T.
-    // - nonstatic_data_members_of() returns a vector of std::meta::info — one per T member
+    // - std::meta::nonstatic_data_members_of() returns a vector of std::meta::info — one per T member
     // - std::meta::access_context::unchecked() bypasses access checking (lets us reflect private members too if needed).
     template for (constexpr auto member :
-                  define_static_array (nonstatic_data_members_of (^^T,
+                  define_static_array (std::meta::nonstatic_data_members_of (^^T,
                                                                   std::meta::access_context::unchecked())))
     {
-        // identifier_of(member) returns the field's source-code name as a string_view (e.g., "health").
-        os << sep << "\"" << identifier_of (member) << "\": ";
+        // std::meta::identifier_of(member) returns the field's source-code name as a string_view (e.g., "health").
+        os << sep << "\"" << std::meta::identifier_of (member) << "\": ";
 
         // obj.[:member:] splices the reflection back into a member access expression — equivalent to writing obj.health, obj.name, etc.
-        os << value_to_json (obj.[:member:]);
+        os << mirror::value_to_json (obj.[:member:]);
 
         //set our string separator to be non null after printing the first member
         sep = ", ";
@@ -73,3 +75,5 @@ std::string to_json (const T& obj)
     os << " }";
     return os.str();
 }
+
+} // namespace mirror

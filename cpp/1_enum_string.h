@@ -7,6 +7,8 @@
 
 // ============================ Demo 1 — Enum ↔ string conversion ============================
 
+namespace mirror {
+
 /**
  * @brief Convert any enum value to its name as a string.
  *
@@ -28,17 +30,17 @@ constexpr std::string enum_to_string (T value)
 
     /*  This basically iterates through all the declared enum values of E.
         - ^^E reflects the enum type E, producing a std::meta::info value.
-        - from that, enumerators_of() returns a vector of std::meta::info, one per enumerator (Red, Green, ...)
+        - from that, std::meta::enumerators_of() returns a vector of std::meta::info, one per enumerator (Red, Green, ...)
         - define_static_array() converts the vector into a static array so it can be iterated with 'template for'.
             Not required by the P2996 standard, but needed by the Bloomberg clang-p2996 fork.
         - 'template for' unrolls the loop at compile time; the compiler generates one if-branch per enumerator.
     */
-    template for (constexpr auto e : define_static_array (enumerators_of (^^T)))
+    template for (constexpr auto e : define_static_array (std::meta::enumerators_of (^^T)))
     {
         // at this point, e is a std::meta::info, so [:e:] converts it into an actual enumerator value, e.g., Color::Red
         if ([:e:] == value)
-            // identifier_of() returns the source-code name of the enumerator as a string_view (e.g., "Red").
-            result = std::string (identifier_of (e));
+            // std::meta::identifier_of() returns the source-code name of the enumerator as a string_view (e.g., "Red").
+            result = std::string (std::meta::identifier_of (e));
     }
 
     return result;
@@ -48,7 +50,7 @@ constexpr std::string enum_to_string (T value)
  * @brief Convert a string to an enum value.
  * @tparam E An enum type (enforced by the requires clause).
  * @param str The string to look up (e.g., "Magenta").
- * @return The matching enumerator, or an error string if not found. The error message uses identifier_of(^^E)
+ * @return The matching enumerator, or an error string if not found. The error message uses std::meta::identifier_of(^^E)
  *         to include the enum's type name via reflection.
  */
 template <typename T>
@@ -56,14 +58,16 @@ template <typename T>
 constexpr std::expected<T, std::string> string_to_enum (const std::string& str)
 {
     // this is the exact same as above; compile-time-iterate through the possible enumerator values of E
-    template for (constexpr auto e : define_static_array (enumerators_of (^^T)))
+    template for (constexpr auto e : define_static_array (std::meta::enumerators_of (^^T)))
     {
-        // but here we reverse the logic: identifier_of(e) gives us the enumerator's name as a string (e.g., "Magenta")
-        if (identifier_of (e) == str)
+        // but here we reverse the logic: std::meta::identifier_of(e) gives us the enumerator's name as a string (e.g., "Magenta")
+        if (std::meta::identifier_of (e) == str)
             // and [:e:] splices it back into the actual enumerator value (e.g., Color::Magenta).
             return [:e:];
     }
 
-    // Can't find the enumerator value. identifier_of(^^E) reflects the enum type to its source-code name (e.g., "Color").
-    return std::unexpected ("\"" + str + "\" is not a valid enumerator value of " + std::string (identifier_of (^^T)));
+    // Can't find the enumerator value. std::meta::identifier_of(^^E) reflects the enum type to its source-code name (e.g., "Color").
+    return std::unexpected ("\"" + str + "\" is not a valid enumerator value of " + std::string (std::meta::identifier_of (^^T)));
 }
+
+} // namespace mirror
