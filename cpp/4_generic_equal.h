@@ -19,21 +19,17 @@ template <typename T>
     requires std::is_aggregate_v<T>
 bool generic_equal (const T& a, const T& b)
 {
-    bool equal = true;
-
-    // Same pattern: reflect the type, iterate its fields at compile time,
-    // and splice each field into a comparison expression.
+    // Same pattern: reflect the type, iterate its fields at compile time, and splice each field into a comparison expression.
     template for (constexpr auto member :
                   define_static_array (std::meta::nonstatic_data_members_of (^^T,
                                                                   std::meta::access_context::unchecked())))
     {
-        // a.[:member:] and b.[:member:] splice the same field reflection
-        //   into member access on two different objects.
+        // a.[:member:] and b.[:member:] splice the same field reflection into member access on two different objects.
         if (a.[:member:] != b.[:member:])
-            equal = false;
+            return false;
     }
 
-    return equal;
+    return true;
 }
 
 } // namespace mirror
