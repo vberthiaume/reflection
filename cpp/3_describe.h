@@ -8,7 +8,6 @@
 #include <type_traits>
 
 // ============================ Demo 3 — Generic "describe" type & field introspection ============================
-
 namespace mirror {
 
 /**

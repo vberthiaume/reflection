@@ -4,12 +4,10 @@
 #include <type_traits>
 
 // ============================ Demo 4 — Generic equality comparison ============================
-
 namespace mirror {
 
 /**
  * @brief Compare two structs for equality by iterating all fields via reflection.
- *
  * Works on any aggregate without requiring operator== to be defined.
  *
  * @tparam T An aggregate type (enforced by the requires clause).

@@ -6,7 +6,6 @@
 #include <type_traits>
 
 // ============================ Demo 1 — Enum ↔ string conversion ============================
-
 namespace mirror {
 
 /**

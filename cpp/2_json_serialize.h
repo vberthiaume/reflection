@@ -8,7 +8,6 @@
 #include <type_traits>
 
 // ============================ Demo 2 — Automatic JSON serialization ============================
-
 namespace mirror {
 
 // Forward-declaring to_json() so we can use it right below when recursing
@@ -51,11 +50,10 @@ template <typename T>
 std::string to_json (const T& obj)
 {
     std::ostringstream os("{ ", std::ios_base::ate);
-
     std::string_view sep;
 
     // Iterate over the members of T.
-    // - ^^T reflects the struct type T.
+    // - ^^T reflects the struct type T into a std::meta::info
     // - std::meta::nonstatic_data_members_of() returns a vector of std::meta::info — one per T member
     // - std::meta::access_context::unchecked() bypasses access checking (lets us reflect private members too if needed).
     template for (constexpr auto member :
